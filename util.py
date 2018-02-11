@@ -2,7 +2,8 @@ import os
 import neurolab as nl
 import numpy as np
 import math
-from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.feature_selection import SelectKBest, f_classif, f_regression, mutual_info_classif, mutual_info_regression, \
+    chi2
 
 
 def feature_selection(data, target):
@@ -29,13 +30,41 @@ def normalize_data(input_data):
     return normalized
 
 
-def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500):
+def create_nn(input_data, output_data, path, hidden_layers=9, epochs=1000):
     # init the neural network
-    net = nl.net.newff([[-1, 1]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
+    mins = np.min(input_data, axis=0).tolist()
+    maxs = np.max(input_data, axis=0).tolist()
+    minmax = [[x, maxs[mins.index(x)]] for x in mins]
+
+    net = nl.net.newff(minmax, [hidden_layers, len(output_data[0])])
     net.trainf = nl.net.train.train_cg
     net.init()
     # train the neural network
-    net.train(input_data, output_data, epochs=epochs, show=10, goal=0.5)
+    net.train(input_data, output_data, epochs=epochs, show=10, goal=0.1)
+    # save network to a file
+    print("\tSaving network in " + path)
+    net.save(path)
+    # get the results
+    res = net.sim(input_data)
+
+    return net, res
+
+
+def find_minmax(input):
+    mins = np.min(input, axis=0).tolist()
+    maxs = np.max(input, axis=0).tolist()
+    minmax = [[math.floor(x), math.ceil(maxs[mins.index(x)])] for x in mins]
+    return minmax
+
+
+def create_neural_network(input_data, target_data, minmax, path, hidden_layers=10, epochs=1000):
+    # init the neural network
+
+    net = nl.net.newff(minmax, [hidden_layers, len(target_data[0])])
+    net.trainf = nl.net.train.train_cg
+    net.init()
+    # train the neural network
+    net.train(input_data, target_data, epochs=epochs, show=10, goal=0.2)
     # save network to a file
     print("\tSaving network in " + path)
     net.save(path)
