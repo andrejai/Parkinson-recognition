@@ -29,13 +29,13 @@ def normalize_data(input_data):
     return normalized
 
 
-def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500):
+def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0.5):
     # init the neural network
-    net = nl.net.newff([[-1, 1]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
+    net = nl.net.newff([[-100, 100]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
     net.trainf = nl.net.train.train_cg
     net.init()
     # train the neural network
-    net.train(input_data, output_data, epochs=epochs, show=10, goal=0.5)
+    net.train(input_data, output_data, epochs=epochs, show=10, goal=goal)
     # save network to a file
     print("\tSaving network in " + path)
     net.save(path)
@@ -43,7 +43,6 @@ def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500):
     res = net.sim(input_data)
 
     return net, res
-
 
 # 70 10 20
 def divide_data_set(data_set):
@@ -55,3 +54,13 @@ def divide_data_set(data_set):
     test_set = data_set[second_stop:-1]
 
     return train_set, validation_set, test_set
+
+def get_data(x_data, y_data):
+    reduces = [y[0] for y in y_data]
+    fs = feature_selection(np.array(x_data), np.array(reduces))
+    n_x_data = normalize_data(fs.tolist())
+    n_y_data = normalize_data(y_data)
+    print(n_y_data)
+    x_train, x_validation, x_test = divide_data_set(n_x_data)
+    y_train, y_validation, y_test = divide_data_set(n_y_data)
+    return x_train, x_validation, x_test, y_train, y_validation, y_test
