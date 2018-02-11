@@ -26,13 +26,19 @@ def normalize_data(input_data):
     # normalize the values (x-mean)/deviation
     normalized = [[(x - means[y.index(x)]) / sqrt[y.index(x)] for x in y] for y in input_data]
 
-    return normalized
+    return normalized, means, sqrt
+
+
+def denormalize_data(input_data, means, sqrt):
+
+    denormalized = [[x * sqrt[y.index(x)] + means[y.index(x)] for x in y] for y in input_data]
+    return denormalized
 
 
 def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0.5):
     # init the neural network
     net = nl.net.newff([[-100, 100]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
-    net.trainf = nl.net.train.train_cg
+    net.trainf = nl.net.train.train_rprop
     net.init()
     # train the neural network
     net.train(input_data, output_data, epochs=epochs, show=10, goal=goal)
@@ -58,9 +64,9 @@ def divide_data_set(data_set):
 def get_data(x_data, y_data):
     reduces = [y[0] for y in y_data]
     fs = feature_selection(np.array(x_data), np.array(reduces))
-    n_x_data = normalize_data(fs.tolist())
-    n_y_data = normalize_data(y_data)
-    print(n_y_data)
+    n_x_data, means_x, sqrt_x = normalize_data(fs.tolist())
+    n_y_data, means, sqrt = normalize_data(y_data)
+
     x_train, x_validation, x_test = divide_data_set(n_x_data)
     y_train, y_validation, y_test = divide_data_set(n_y_data)
-    return x_train, x_validation, x_test, y_train, y_validation, y_test
+    return x_train, x_validation, x_test, y_train, y_validation, y_test, means, sqrt
