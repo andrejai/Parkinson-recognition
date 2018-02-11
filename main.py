@@ -18,5 +18,5 @@ if __name__ == "__main__":
     net, res = create_nn(n_x_train, n_y_train, os.getcwd() + "\\neural_ds2.net")
 """
     DS1.train() # load data and train ds1 network
-#    DS3.train()
+    DS3.train()
 
