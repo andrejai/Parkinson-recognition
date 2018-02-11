@@ -7,7 +7,7 @@ from sklearn.feature_selection import SelectKBest, f_classif, f_regression, mutu
 
 
 def feature_selection(data, target):
-    new_input = SelectKBest(f_classif, k=10)
+    new_input = SelectKBest(f_regression, k=10)
     new_input.fit(data, target)
     result = new_input.transform(data)
 
@@ -27,27 +27,7 @@ def normalize_data(input_data):
     # normalize the values (x-mean)/deviation
     normalized = [[(x - means[y.index(x)]) / sqrt[y.index(x)] for x in y] for y in input_data]
 
-    return normalized
-
-
-def create_nn(input_data, output_data, path, hidden_layers=9, epochs=1000):
-    # init the neural network
-    mins = np.min(input_data, axis=0).tolist()
-    maxs = np.max(input_data, axis=0).tolist()
-    minmax = [[x, maxs[mins.index(x)]] for x in mins]
-
-    net = nl.net.newff(minmax, [hidden_layers, len(output_data[0])])
-    net.trainf = nl.net.train.train_cg
-    net.init()
-    # train the neural network
-    net.train(input_data, output_data, epochs=epochs, show=10, goal=0.1)
-    # save network to a file
-    print("\tSaving network in " + path)
-    net.save(path)
-    # get the results
-    res = net.sim(input_data)
-
-    return net, res
+    return normalized, means, sqrt
 
 
 def find_minmax(input):
@@ -59,12 +39,37 @@ def find_minmax(input):
 
 def create_neural_network(input_data, target_data, minmax, path, hidden_layers=10, epochs=1000):
     # init the neural network
-
+    if os.path.isfile(path):
+        print("\n\tLoading network from " + path)
+        net = nl.load(path)
+        res = net.sim(input_data)
+        return net,res
     net = nl.net.newff(minmax, [hidden_layers, len(target_data[0])])
     net.trainf = nl.net.train.train_cg
     net.init()
     # train the neural network
     net.train(input_data, target_data, epochs=epochs, show=10, goal=0.2)
+    print("\tSaving network in " + path)
+    net.save(path)
+    # get the results
+    res = net.sim(input_data)
+
+    return net, res
+
+
+def denormalize_data(input_data, means, sqrt):
+    denormalized = [[x * sqrt[y.index(x)] + means[y.index(x)] for x in y] for y in input_data]
+    return denormalized
+
+
+def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0.5):
+    # init the neural network
+    net = nl.net.newff([[-100, 100]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
+    net.trainf = nl.net.train.train_rprop
+    net.init()
+    # train the neural network
+    net.train(input_data, output_data, epochs=epochs, show=10, goal=goal)
+
     # save network to a file
     print("\tSaving network in " + path)
     net.save(path)
@@ -84,3 +89,14 @@ def divide_data_set(data_set):
     test_set = data_set[second_stop:-1]
 
     return train_set, validation_set, test_set
+
+
+def get_data(x_data, y_data):
+    reduces = [y[0] for y in y_data]
+    fs = feature_selection(np.array(x_data), np.array(reduces))
+    n_x_data, means_x, sqrt_x = normalize_data(fs.tolist())
+    n_y_data, means, sqrt = normalize_data(y_data)
+
+    x_train, x_validation, x_test = divide_data_set(n_x_data)
+    y_train, y_validation, y_test = divide_data_set(n_y_data)
+    return x_train, x_validation, x_test, y_train, y_validation, y_test, means, sqrt
