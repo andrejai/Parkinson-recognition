@@ -36,6 +36,11 @@ def denormalize_data(input_data, means, sqrt):
 
 
 def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0.5):
+    if os.path.isfile(path):
+        print("\n\tLoading network from " + path)
+        net = nl.load(path)
+        res = net.sim(input_data)
+        return net, res
     # init the neural network
     net = nl.net.newff([[-100, 100]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
     net.trainf = nl.net.train.train_rprop

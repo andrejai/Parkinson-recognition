@@ -24,8 +24,7 @@ def test(x, y, net, means, sqrt):
     existence = 0
     y = denormalize_data(y, means, sqrt)
     netOutput = denormalize_data(netOutput.tolist(), means, sqrt)
-    print(y)
-    print(netOutput)
+
     for i in range(0, len(netOutput)):
         if netOutput[i][0] - 0.5 <= y[i][0] <= netOutput[i][0] + 0.5:
             updrs_true += 1
@@ -41,9 +40,12 @@ def test(x, y, net, means, sqrt):
 
 def train():
     x_data, y_data = read(os.getcwd() + "\datasets\\1\\train_data.csv")
-    print(y_data)
+
     x_train, x_validation, x_test, y_train, y_validation, y_test, means, sqrt = get_data(x_data, y_data)
-    print(y_train)
-    net, res = create_nn(x_train, y_train, os.getcwd() + "\\ds1_7_1000_01_rprop.net", 7, 1000, 0.01)
-    test(x_test, y_test, net, means, sqrt)
+    path = input("Input output file name for neural network(enter for end): ")
+    while path != "":
+        path = path + ".net"
+        net, res = create_nn(x_train, y_train, os.getcwd() + "\\"+path, 7, 1000, 0.01)
+        test(x_test, y_test, net, means, sqrt)
+        path = input("Input output file name for neural network(enter for end): ")
 
