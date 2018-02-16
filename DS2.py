@@ -5,7 +5,7 @@ import os
 import numpy as np
 import math
 
-from util import feature_selection, normalize_data, find_minmax, divide_data_set, create_neural_network, \
+from util import feature_selection, normalize_data, find_minmax, divide_data_set, \
     denormalize_data, minmax_normalize, minmax_denormalize
 
 

@@ -1,7 +1,10 @@
 import csv
 import os
+
 import numpy as np
-from util import create_nn, get_data, denormalize_data
+
+from util import create_nn, test, feature_selection, normalize_data, divide_data_set
+
 
 def read(file_name="\datasets\\1\\train_data.csv"):
     X = []
@@ -10,40 +13,34 @@ def read(file_name="\datasets\\1\\train_data.csv"):
         reader = csv.reader(f)
         next(reader, None)
         for row in reader:
-            Y.append([float(_x) for _x in row[27:29]])
+            Y.append([float(_x) for _x in row[28:29]])
             del row[27:29]
             X.append([int(_y) if _y.isdigit() else float(_y) for _y in row])
+    for y in Y:
+        if y[0] == 0:
+            y.append(1)
+        else:
+            y.append(0)
     return X, Y
 
-def test(x, y, net, means, sqrt):
-    #simulate network, netOutput is y values
-    netOutput = net.sim(x)
 
-    #count number of right guesses
-    updrs_true = 0
-    existence = 0
-    y = denormalize_data(y, means, sqrt)
-    netOutput = denormalize_data(netOutput.tolist(), means, sqrt)
-    print(y)
-    print(netOutput)
-    for i in range(0, len(netOutput)):
-        if netOutput[i][0] - 0.5 <= y[i][0] <= netOutput[i][0] + 0.5:
-            updrs_true += 1
-        if y[i][0] > 0.5 and netOutput[i][0] > 0.5:
-            existence += 1
-        elif y[i][0] <= 0.5 and netOutput[i][0] <= 0.5:
-            existence += 1
-    print("\t\tPercentage of correctly counted UPDRS using NN is: {0}%" \
-          .format((updrs_true / len(x)) * 100))
-    print("\t\tPercentage of correctly recognized Parkinson using NN is: {0}%" \
-          .format((existence / len(x)) * 100))
+def get_data(x_data, y_data):
+    reduces = [y[0] for y in y_data]
+    fs = feature_selection(np.array(x_data), np.array(reduces))
+    n_x_data, means_x, sqrt_x = normalize_data(fs.tolist())
+
+    x_train, x_validation, x_test = divide_data_set(n_x_data)
+    y_train, y_validation, y_test = divide_data_set(y_data)
+    return x_train, x_validation, x_test, y_train, y_validation, y_test
 
 
 def train():
     x_data, y_data = read(os.getcwd() + "\datasets\\1\\train_data.csv")
-    print(y_data)
-    x_train, x_validation, x_test, y_train, y_validation, y_test, means, sqrt = get_data(x_data, y_data)
-    print(y_train)
-    net, res = create_nn(x_train, y_train, os.getcwd() + "\\ds1_7_1000_01_rprop.net", 7, 1000, 0.01)
-    test(x_test, y_test, net, means, sqrt)
 
+    x_train, x_validation, x_test, y_train, y_validation, y_test = get_data(x_data, y_data)
+    path = input("Input output file name for neural network(enter for end): ")
+    while path != "":
+        path = path + ".net"
+        net, res = create_nn(x_train, y_train, os.getcwd() + "\\"+path, 6, 1000, 0.01)
+        test(x_test, y_test, net)
+        path = input("Input output file name for neural network(enter for end): ")

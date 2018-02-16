@@ -2,12 +2,7 @@ import os
 import neurolab as nl
 import numpy as np
 import math
-import pylab as pl
-from sklearn.preprocessing import MinMaxScaler
-from neurolab.trans import SoftMax, TanSig
-from sklearn.feature_selection import SelectKBest, f_classif, f_regression, mutual_info_classif, mutual_info_regression, \
-    chi2
-from sklearn.neural_network import MLPRegressor
+from sklearn.feature_selection import SelectKBest, f_regression
 
 
 def feature_selection(data, target):
@@ -52,39 +47,25 @@ def find_minmax(input):
     return minmax
 
 
-def create_neural_network(input_data, target_data, minmax, path, hidden_layers=7, epochs=800):
-    # init the neural network
+def denormalize_data(input_data, means, sqrt):
+    denormalized = [[x * sqrt[y.index(x)] + means[y.index(x)] for x in y] for y in input_data]
+    return denormalized
+
+
+def denormalize_data(input_data, means, sqrt):
+
+    denormalized = [[x * sqrt[y.index(x)] + means[y.index(x)] for x in y] for y in input_data]
+    return denormalized
+
+
+def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0.5):
+
     if os.path.isfile(path):
         print("\n\tLoading network from " + path)
         net = nl.load(path)
         res = net.sim(input_data)
         return net, res
 
-    net = nl.net.newff(minmax, [hidden_layers, len(target_data[0])])
-    # net.transf = nl.net.trans.SoftMax
-    net.trainf = nl.net.train.train_rprop
-    # net.errorf = nl.net.error.CEE
-    # net.layers[-1].transf = nl.trans.SoftMax()
-    net.init()
-    # train the neural network
-    err = net.train(input_data, target_data, epochs=epochs, show=10, goal=1)
-    pl.figure(1)
-    pl.plot(err)
-    pl.show()
-    print("\tSaving network in " + path)
-    net.save(path)
-    # get the results
-    res = net.sim(input_data)
-
-    return net, res
-
-
-def denormalize_data(input_data, means, sqrt):
-    denormalized = [[x * sqrt[y.index(x)] + means[y.index(x)] for x in y] for y in input_data]
-    return denormalized
-
-
-def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0.5):
     # init the neural network
     net = nl.net.newff([[-100, 100]] * len(input_data[0]), [hidden_layers, len(output_data[0])])
     net.trainf = nl.net.train.train_rprop
@@ -100,7 +81,6 @@ def create_nn(input_data, output_data, path, hidden_layers=8, epochs=500, goal=0
 
     return net, res
 
-
 # 70 10 20
 def divide_data_set(data_set):
     set_len = len(data_set)
@@ -113,12 +93,15 @@ def divide_data_set(data_set):
     return train_set, validation_set, test_set
 
 
-def get_data(x_data, y_data):
-    reduces = [y[0] for y in y_data]
-    fs = feature_selection(np.array(x_data), np.array(reduces))
-    n_x_data, means_x, sqrt_x = normalize_data(fs.tolist())
-    n_y_data, means, sqrt = normalize_data(y_data)
+def test(x, y, net):
+    netOutput = net.sim(x)  # simulate network, netOutput is y values
 
-    x_train, x_validation, x_test = divide_data_set(n_x_data)
-    y_train, y_validation, y_test = divide_data_set(n_y_data)
-    return x_train, x_validation, x_test, y_train, y_validation, y_test, means, sqrt
+    existence = 0  # count number of right guesses
+
+    for i in range(0, len(netOutput)):
+        if y[i][0] == 1 and abs(netOutput[i][0]) > abs(netOutput[i][1]):
+            existence += 1
+        elif y[i][0] == 0 and abs(netOutput[i][0]) < abs(netOutput[i][1]):
+            existence += 1
+    print("\t\tPercentage of correctly recognized Parkinson using NN is: {0}%" \
+          .format((existence / len(x)) * 100))

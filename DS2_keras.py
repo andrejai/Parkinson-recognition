@@ -78,9 +78,12 @@ def train():
     n_y_train = np.array(y_train)
     print("\t\tTraining neural network...")
     # Step 6: train network
-    for i in range(0, 10):
-        net = create_neural_network(n_x_train, n_y_train, path=os.getcwd() + "\\keras853_50ep", lr=(i+1)/10)
-        test(x_test, y_test, net, i)
+    path = input("Input output file name for neural network(enter for end): ")
+    while path != "":
+        for i in range(0, 10):
+            net = create_neural_network(n_x_train, n_y_train, path=os.getcwd() + "\\" + path, lr=(i + 1) / 10)
+            test(x_test, y_test, net, i)
+        path = input("Input output file name for neural network(enter for end): ")
 
 
 def train_reg(X, Y, fn, X_test, Y_test, seed=7):
@@ -140,8 +143,8 @@ def load_model(path):
 
 
 def create_neural_network(x_train, y_train, path, lr=0.1, epochs=50, batch=50):
-    # if os.path.isfile(path):
-    #     return load_model(path)
+    if os.path.isfile(path):
+        return load_model(path)
 
     model = Sequential()
 
