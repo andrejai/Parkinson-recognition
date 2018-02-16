@@ -75,3 +75,11 @@ def get_data(x_data, y_data):
     x_train, x_validation, x_test = divide_data_set(n_x_data)
     y_train, y_validation, y_test = divide_data_set(n_y_data)
     return x_train, x_validation, x_test, y_train, y_validation, y_test, means, sqrt
+
+def get_data_ds3(x_data, y_data):
+    reduces = [y[0] for y in y_data]
+    n_x_data, means_x, sqrt_x = normalize_data(x_data)
+
+    x_train, x_validation, x_test = divide_data_set(n_x_data)
+    y_train, y_validation, y_test = divide_data_set(y_data)
+    return x_train, x_validation, x_test, y_train, y_validation, y_test

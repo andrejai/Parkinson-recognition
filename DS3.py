@@ -1,48 +1,48 @@
 import csv
 import os
-from util import create_nn, denormalize_data, normalize_data, divide_data_set
-import neurolab as nl
+from util import create_nn, denormalize_data, get_data_ds3
+from random import shuffle
 
-def read(path="\datasets\\3"):
+
+def read(path="\datasets\\3\data"):
     X = []
     Y = []
-
-    for filename in os.listdir(os.getcwd()+path+"\hw_dataset\control"):
-        if filename.endswith(".txt"):
-            person = []
-            f = open(os.getcwd()+path+"\hw_dataset\control\\"+filename, 'r')
-            reader = csv.reader(f)
-            next(reader, None)
-            for row in reader:
-                person_data = []
-                person_data.append([[float(x) for x in y.split(';')] for y in row])
-                person.append(person_data)
-            X.append(person)
-            Y.append([0, 1])
-    for filename in os.listdir(os.getcwd()+path+"\hw_dataset\parkinson"):
-        if filename.endswith(".txt"):
-            person = []
-            f = open(os.getcwd()+path+"\hw_dataset\parkinson\\"+filename, 'r')
-            reader = csv.reader(f)
-            next(reader, None)
-            for row in reader:
-                person_data = []
-                person_data.append([[float(x) for x in y.split(';')] for y in row])
-                person.append(person_data)
-            X.append(person)
-            Y.append([1, 0])
-    for filename in os.listdir(os.getcwd()+path+"\\new_dataset\parkinson"):
-        if filename.endswith(".txt"):
-            f = open(os.getcwd()+path+"\\new_dataset\parkinson\\"+filename, 'r')
-            reader = csv.reader(f)
-            next(reader, None)
-            for row in reader:
-                person_data = []
-                person_data.append([[float(x) for x in y.split(';')] for y in row])
-                person.append(person_data)
-            X.append(person);
-            Y.append([1, 0]);
+    files = os.listdir(os.getcwd()+path)
+    shuffle(files)
+    for filename in files:
+        person = {0: [], 1: [], 2: []}
+        f = open(os.getcwd()+path+"\\"+filename, 'r')
+        for row in f.readlines():
+            person[int(row.strip().split(';')[-1])].append([float(x) for x in row.strip().split(';')])
+        X.append(person)
+        for i in range(0, 3):
+            if len(person[i]) != 0:
+                if filename.startswith("C"):
+                    Y.append([0, 1])
+                else:
+                    Y.append([1, 0])
     return X, Y
+
+
+def generate_data(X):
+    x_data = []
+    for x in X:
+        for i in range(0, 3):
+            person = []
+            if len(x[i]) > 0:
+                angle = [item[3] for item in x[i]]
+                pressure = [item[4] for item in x[i]]
+                person.append(len(x[i]))
+                person.append(sum(angle) / len(angle))
+                person.append(sum(pressure) / len(pressure))
+                person.append((x[i][-1][5] - x[i][0][5]) / 60)
+                person.append(max(angle))
+                person.append(min(angle))
+                person.append(min(pressure))
+                person.append(max(pressure))
+                x_data.append(person)
+    return x_data
+
 
 def test(x, y, net):
     #simulate network, netOutput is y values
@@ -63,4 +63,15 @@ def test(x, y, net):
 
 def train():
     x_data, y_data = read()
-
+    x_data = generate_data(x_data)
+    x_train, x_validation, x_test, y_train, y_validation, y_test = get_data_ds3(x_data, y_data)
+    x_train = x_train + x_validation
+    y_train = y_train + y_validation
+    print(len(x_train))
+    print(len(y_train))
+    path = input("Input output file name for neural network(enter for end): ")
+    while path != "":
+        path = path + ".net"
+        net, res = create_nn(x_train, y_train, os.getcwd() + "\\" + path, 7, 6000, 0.001)
+        test(x_test, y_test, net)
+        path = input("Input output file name for neural network(enter for end): ")
