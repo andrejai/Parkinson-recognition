@@ -1,0 +1,15 @@
+Motivation:
+There aren't any known systems for recognizing Parkinson disease. Doctors use devices made for mesuring important attributes for recognizing Parkinson disease. Our motivation is that we could make a system which will help people to test themselfes without doctors.
+Dataset:
+From machine learning repositories:
+https://archive.ics.uci.edu/ml/datasets/Parkinson+Speech+Dataset+with++Multiple+Types+of+Sound+Recordings#
+dataset has 29 attributes
+https://archive.ics.uci.edu/ml/datasets/parkinsons+telemonitoring dataset has 22 attributes
+https://archive.ics.uci.edu/ml/datasets/Parkinson+Disease+Spiral+Drawings+Using+Digitized+Graphics+Tablet#
+dataset has 7 attributes and 77 files representing a patient. Patients have 2 or 3 tests they did, we extracted 8 attributes from each test and used them to train NN. We extracted 10 attributes by correlation from first and second dataset and used them to train NN.
+Methods:
+We used neurolab, numpy and keras. We used ff NN with one input, one output and one to three hidden layers. 70% of each dataset was used for training NN, 20% was used for testing, and 10% fro validation. IN first and third dataset we used resilient backpropagation as training function. We trained NN to recognize existence of Parkinson disease. In second dataset we used ..............
+Results:
+Neural network was accurate 100% when recognizing Parkinson in first dataset, from 70-100% accurate when using third dataset, and it guessed UPDRS in second dataset with ..... square error. We don't have any relevant results in this field to compare this with because there weren't any important systems like this that we could find.
+Further research:
+With better training of neural networks and more data for third dataset accuracy could be 100% in recognizing  Parkinson disease. Also we could improve this system if users could have access to devices used to collect data that we used. We could improve results for UPDRS guessing if we worked with doctors and scientists in this field and make system which could give predictions up to 100% accuracy.
